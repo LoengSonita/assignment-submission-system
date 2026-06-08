@@ -1,176 +1,446 @@
 @extends('layouts.app')
 
-@section('content')
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-8">
+@section('title', 'Dashboard')
 
-    <!-- Welcome Section -->
-    <div class="mb-8">
-        <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Welcome back, {{ Auth::user()->full_name }}! 👋
-        </h1>
-        <p class="text-gray-500 mt-2">Here's what's happening with your learning journey today.</p>
+@section('content')
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 20px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        position: relative;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-gradient);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        background: var(--primary-gradient);
+        color: white;
+    }
+
+    .stat-number {
+        font-size: 32px;
+        font-weight: 800;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .section-card {
+        background: white;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    }
+
+    .section-card:hover {
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .deadline-item {
+        border-left: 4px solid;
+        transition: all 0.3s ease;
+    }
+
+    .deadline-item:hover {
+        transform: translateX(5px);
+        background: #f8f9fa;
+    }
+
+    .deadline-urgent { border-left-color: #dc3545; }
+    .deadline-warning { border-left-color: #ffc107; }
+    .deadline-normal { border-left-color: #28a745; }
+
+    .progress-bar-custom {
+        background: var(--primary-gradient);
+        border-radius: 10px;
+        height: 8px;
+    }
+
+    .welcome-banner {
+        background: var(--primary-gradient);
+        border-radius: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .welcome-banner::before {
+        content: '✨';
+        position: absolute;
+        font-size: 150px;
+        right: 20px;
+        bottom: -30px;
+        opacity: 0.1;
+    }
+
+    .badge-role {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .badge-role.admin { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .badge-role.teacher { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .badge-role.student { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+
+    .activity-timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .activity-timeline::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .activity-item {
+        position: relative;
+        margin-bottom: 25px;
+    }
+
+    .activity-dot {
+        position: absolute;
+        left: -26px;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #764ba2;
+        border: 2px solid white;
+        box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.2);
+    }
+
+    .grade-chart-bar {
+        transition: width 1s ease;
+        background: var(--primary-gradient);
+        border-radius: 10px;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fadeInUp {
+        animation: fadeInUp 0.6s ease forwards;
+    }
+</style>
+
+<div class="container py-4">
+
+    <!-- Welcome Banner -->
+    <div class="welcome-banner text-white p-5 mb-4 animate-fadeInUp">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-4 fw-bold mb-3">
+                    Welcome back, {{ Auth::user()->full_name }}! 👋
+                </h1>
+                <p class="lead mb-0 opacity-90">
+                    Here's what's happening with your learning journey today.
+                </p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="bg-white bg-opacity-20 rounded-3 p-3 d-inline-block">
+                    <i class="fas fa-graduation-cap fa-3x"></i>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Courses Card -->
-        <div class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl shadow-lg">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                        </svg>
+    <div class="row g-4 mb-5">
+        <div class="col-md-6 col-lg-3 animate-fadeInUp" style="animation-delay: 0.1s">
+            <div class="stat-card p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="stat-icon">
+                        <i class="fas fa-book-open"></i>
                     </div>
-                    <span class="text-3xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{{ $totalCourses }}</span>
+                    <span class="stat-number">{{ $totalCourses }}</span>
                 </div>
-                <h3 class="text-gray-600 font-semibold text-lg mb-1">Active Courses</h3>
-                <p class="text-sm text-gray-400">{{ $totalCourses > 0 ? 'Available for enrollment' : 'No courses yet' }}</p>
-                <div class="mt-4 w-full bg-gray-100 rounded-full h-2">
-                    <div class="bg-gradient-to-r from-blue-400 to-blue-600 h-2 rounded-full" style="width: {{ min(100, ($totalCourses / 20) * 100) }}%"></div>
-                </div>
+                <h6 class="text-muted mb-1">Total Courses</h6>
+                <h5 class="fw-bold mb-0">Active Learning</h5>
+                <small class="text-muted">{{ $totalCourses > 0 ? '+2 new this month' : 'No courses yet' }}</small>
             </div>
         </div>
 
-        <!-- Assignments Card -->
-        <div class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl shadow-lg">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-                        </svg>
+        <div class="col-md-6 col-lg-3 animate-fadeInUp" style="animation-delay: 0.2s">
+            <div class="stat-card p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="stat-icon" style="background: var(--success-gradient);">
+                        <i class="fas fa-tasks"></i>
                     </div>
-                    <span class="text-3xl font-bold text-gray-800 group-hover:text-green-600 transition-colors">{{ $totalAssignments }}</span>
+                    <span class="stat-number" style="background: var(--success-gradient); -webkit-background-clip: text;">{{ $totalAssignments }}</span>
                 </div>
-                <h3 class="text-gray-600 font-semibold text-lg mb-1">Assignments</h3>
-                <p class="text-sm text-gray-400">{{ $upcomingDeadlines->count() }} due this week</p>
-                <div class="mt-4 w-full bg-gray-100 rounded-full h-2">
-                    <div class="bg-gradient-to-r from-green-400 to-emerald-600 h-2 rounded-full" style="width: {{ $totalAssignments > 0 ? min(100, ($totalSubmissions / $totalAssignments / 10) * 100) : 0 }}%"></div>
-                </div>
+                <h6 class="text-muted mb-1">Total Assignments</h6>
+                <h5 class="fw-bold mb-0">Pending Tasks</h5>
+                <small class="text-muted">{{ $upcomingDeadlines->count() }} due this week</small>
             </div>
         </div>
 
-        <!-- Submissions Card -->
-        <div class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl shadow-lg">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+        <div class="col-md-6 col-lg-3 animate-fadeInUp" style="animation-delay: 0.3s">
+            <div class="stat-card p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="stat-icon" style="background: var(--warning-gradient);">
+                        <i class="fas fa-file-upload"></i>
                     </div>
-                    <span class="text-3xl font-bold text-gray-800 group-hover:text-purple-600 transition-colors">{{ $totalSubmissions }}</span>
+                    <span class="stat-number" style="background: var(--warning-gradient); -webkit-background-clip: text;">{{ $totalSubmissions }}</span>
                 </div>
-                <h3 class="text-gray-600 font-semibold text-lg mb-1">Submissions</h3>
-                <p class="text-sm text-gray-400">{{ $gradedSubmissions }} graded, {{ $pendingGrading }} pending</p>
-                <div class="mt-4 w-full bg-gray-100 rounded-full h-2">
-                    <div class="bg-gradient-to-r from-purple-400 to-purple-600 h-2 rounded-full" style="width: {{ $totalSubmissions > 0 ? ($gradedSubmissions / $totalSubmissions) * 100 : 0 }}%"></div>
-                </div>
+                <h6 class="text-muted mb-1">Total Submissions</h6>
+                <h5 class="fw-bold mb-0">{{ $gradedSubmissions }} Graded</h5>
+                <small class="text-muted">{{ $pendingGrading }} awaiting grading</small>
             </div>
         </div>
 
-        <!-- Average Score Card -->
-        <div class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-gradient-to-br from-orange-400 to-red-600 rounded-xl shadow-lg">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
+        <div class="col-md-6 col-lg-3 animate-fadeInUp" style="animation-delay: 0.4s">
+            <div class="stat-card p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="stat-icon" style="background: var(--info-gradient);">
+                        <i class="fas fa-chart-line"></i>
                     </div>
-                    <span class="text-3xl font-bold text-gray-800 group-hover:text-orange-600 transition-colors">{{ round($averageScore) }}%</span>
+                    <span class="stat-number" style="background: var(--info-gradient); -webkit-background-clip: text;">{{ round($averageScore) }}%</span>
                 </div>
-                <h3 class="text-gray-600 font-semibold text-lg mb-1">Average Score</h3>
-                <p class="text-sm text-gray-400">Overall class performance</p>
-                <div class="mt-4 w-full bg-gray-100 rounded-full h-2">
-                    <div class="bg-gradient-to-r from-orange-400 to-red-600 h-2 rounded-full" style="width: {{ $averageScore }}%"></div>
-                </div>
+                <h6 class="text-muted mb-1">Average Score</h6>
+                <h5 class="fw-bold mb-0">Class Performance</h5>
+                <small class="text-muted">Overall achievement</small>
             </div>
         </div>
     </div>
 
-    <!-- Recent Activity Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Charts Row -->
+    <div class="row g-4 mb-5">
+        <!-- Submissions by Course Chart -->
+        <div class="col-lg-6 animate-fadeInUp" style="animation-delay: 0.5s">
+            <div class="section-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold mb-0">
+                        <i class="fas fa-chart-bar text-primary me-2"></i> Submissions by Course
+                    </h4>
+                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">Last 30 days</span>
+                </div>
+                <canvas id="submissionsChart" height="250"></canvas>
+            </div>
+        </div>
+
+        <!-- Grade Distribution Chart -->
+        <div class="col-lg-6 animate-fadeInUp" style="animation-delay: 0.6s">
+            <div class="section-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold mb-0">
+                        <i class="fas fa-chart-pie text-success me-2"></i> Grade Distribution
+                    </h4>
+                    <span class="badge bg-success bg-opacity-10 text-success px-3 py-2">Overall</span>
+                </div>
+                <canvas id="gradesChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Row -->
+    <div class="row g-4">
         <!-- Recent Submissions -->
-        <div class="bg-white rounded-2xl shadow-lg p-6">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">📝 Recent Submissions</h2>
-            <div class="space-y-4">
-                @forelse($recentSubmissions as $submission)
-                <div class="flex items-center p-3 bg-gradient-to-r from-blue-50 to-transparent rounded-lg hover:shadow-md transition-shadow">
-                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                        <span class="text-blue-600 font-bold">{{ strtoupper(substr($submission->student->full_name ?? 'S', 0, 2)) }}</span>
-                    </div>
-                    <div class="flex-1">
-                        <h3 class="font-semibold text-gray-700">{{ $submission->assignment->title ?? 'N/A' }}</h3>
-                        <p class="text-sm text-gray-500">by {{ $submission->student->full_name ?? 'Student' }} • {{ $submission->created_at->diffForHumans() }}</p>
-                    </div>
-                    <span class="text-blue-600 font-semibold">→</span>
+        <div class="col-lg-6 animate-fadeInUp" style="animation-delay: 0.7s">
+            <div class="section-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold mb-0">
+                        <i class="fas fa-clock text-info me-2"></i> Recent Activity
+                    </h4>
+                    <i class="fas fa-ellipsis-h text-muted"></i>
                 </div>
-                @empty
-                <div class="text-center text-gray-500 py-8">
-                    <p>No submissions yet</p>
+                <div class="activity-timeline">
+                    @forelse($recentSubmissions as $submission)
+                        <div class="activity-item">
+                            <div class="activity-dot"></div>
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="fw-bold mb-1">{{ $submission->assignment->title ?? 'N/A' }}</h6>
+                                    <p class="text-muted small mb-0">
+                                        <i class="fas fa-user me-1"></i> {{ $submission->student->full_name ?? 'Student' }}
+                                        <br>
+                                        <i class="fas fa-calendar me-1"></i> {{ $submission->created_at->diffForHumans() }}
+                                    </p>
+                                </div>
+                                @if($submission->grade)
+                                    <span class="badge bg-success">✓ Graded</span>
+                                @else
+                                    <span class="badge bg-warning">⏳ Pending</span>
+                                @endif
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-muted text-center py-4">No recent submissions</p>
+                    @endforelse
                 </div>
-                @endforelse
             </div>
         </div>
 
         <!-- Upcoming Deadlines -->
-        <div class="bg-white rounded-2xl shadow-lg p-6">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">⏰ Upcoming Deadlines</h2>
-            <div class="space-y-4">
-                @forelse($upcomingDeadlines as $assignment)
-                @php
-                    $daysLeft = now()->diffInDays($assignment->due_date, false);
-                    $urgentClass = $daysLeft <= 2 ? 'from-red-50' : ($daysLeft <= 5 ? 'from-yellow-50' : 'from-green-50');
-                    $textColor = $daysLeft <= 2 ? 'text-red-600' : ($daysLeft <= 5 ? 'text-yellow-600' : 'text-green-600');
-                @endphp
-                <div class="flex items-center justify-between p-3 bg-gradient-to-r {{ $urgentClass }} to-transparent rounded-lg">
-                    <div>
-                        <h3 class="font-semibold text-gray-700">{{ $assignment->title }}</h3>
-                        <p class="text-sm text-gray-500">{{ $assignment->course->course_name ?? 'N/A' }}</p>
-                    </div>
-                    <span class="{{ $textColor }} font-semibold text-sm">
-                        @if($daysLeft <= 0)
-                            Overdue
-                        @elseif($daysLeft == 1)
-                            Due tomorrow
-                        @else
-                            Due in {{ $daysLeft }} days
-                        @endif
-                    </span>
+        <div class="col-lg-6 animate-fadeInUp" style="animation-delay: 0.8s">
+            <div class="section-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold mb-0">
+                        <i class="fas fa-hourglass-half text-warning me-2"></i> Upcoming Deadlines
+                    </h4>
+                    <i class="fas fa-ellipsis-h text-muted"></i>
                 </div>
-                @empty
-                <div class="text-center text-gray-500 py-8">
-                    <p>No upcoming deadlines</p>
+                <div class="space-y-3">
+                    @forelse($upcomingDeadlines as $assignment)
+                        @php
+                            $daysLeft = now()->diffInDays($assignment->due_date, false);
+                            $statusClass = $daysLeft <= 2 ? 'deadline-urgent' : ($daysLeft <= 5 ? 'deadline-warning' : 'deadline-normal');
+                            $statusText = $daysLeft <= 2 ? '⚠️ Urgent' : ($daysLeft <= 5 ? '📅 Soon' : '✅ On Track');
+                        @endphp
+                        <div class="deadline-item {{ $statusClass }} p-3 rounded-3 mb-3 bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="fw-bold mb-1">{{ $assignment->title }}</h6>
+                                    <p class="text-muted small mb-0">
+                                        <i class="fas fa-book me-1"></i> {{ $assignment->course->course_name ?? 'N/A' }}
+                                    </p>
+                                </div>
+                                <div class="text-end">
+                                    <div class="small fw-bold">{{ $statusText }}</div>
+                                    <div class="text-muted small">
+                                        {{ $assignment->due_date->format('M d, H:i') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-muted text-center py-4">No upcoming deadlines</p>
+                    @endforelse
                 </div>
-                @endforelse
             </div>
         </div>
     </div>
 
-    <!-- Grade Distribution Chart -->
-    <div class="mt-6 bg-white rounded-2xl shadow-lg p-6">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">📊 Grade Distribution</h2>
-        <div class="space-y-3">
-            @foreach($gradeLabels as $index => $grade)
-            @php
-                $total = $gradeData->sum();
-                $percentage = $total > 0 ? ($gradeData[$index] / $total) * 100 : 0;
-                $colors = ['bg-green-500', 'bg-blue-500', 'bg-yellow-500', 'bg-orange-500', 'bg-red-500'];
-            @endphp
-            <div>
-                <div class="flex justify-between mb-1">
-                    <span class="font-semibold">{{ $grade }}</span>
-                    <span class="text-gray-600">{{ $gradeData[$index] }} students ({{ round($percentage) }}%)</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-3">
-                    <div class="{{ $colors[$index] }} h-3 rounded-full" style="width: {{ $percentage }}%"></div>
-                </div>
+    <!-- Grade Distribution Bars (if no chart data) -->
+    @if($gradeLabels && $gradeLabels->count() > 0)
+    <div class="row mt-4 animate-fadeInUp" style="animation-delay: 0.9s">
+        <div class="col-12">
+            <div class="section-card p-4">
+                <h4 class="fw-bold mb-4">
+                    <i class="fas fa-trophy text-warning me-2"></i> Grade Distribution Details
+                </h4>
+                @foreach($gradeLabels as $index => $grade)
+                    @php
+                        $total = $gradeData->sum();
+                        $percentage = $total > 0 ? ($gradeData[$index] / $total) * 100 : 0;
+                    @endphp
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="fw-bold">{{ $grade }} Grade</span>
+                            <span class="text-muted">{{ $gradeData[$index] }} students ({{ round($percentage) }}%)</span>
+                        </div>
+                        <div class="progress bg-light rounded-pill" style="height: 10px;">
+                            <div class="progress-bar-custom" style="width: {{ $percentage }}%; height: 10px;"></div>
+                        </div>
+                    </div>
+                @endforeach
             </div>
-            @endforeach
         </div>
     </div>
+    @endif
 
 </div>
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Submissions by Course Chart
+    const ctx1 = document.getElementById('submissionsChart').getContext('2d');
+    new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: @json($courseLabels),
+            datasets: [{
+                label: 'Number of Submissions',
+                data: @json($submissionData),
+                backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                borderRadius: 10,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: { backgroundColor: '#333', titleColor: '#fff', bodyColor: '#fff' }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Grade Distribution Chart
+    const ctx2 = document.getElementById('gradesChart').getContext('2d');
+    new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: @json($gradeLabels),
+            datasets: [{
+                data: @json($gradeData),
+                backgroundColor: ['#43e97b', '#4facfe', '#fa709a', '#feca57', '#ff6b6b'],
+                borderWidth: 0,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: { backgroundColor: '#333' }
+            },
+            cutout: '60%'
+        }
+    });
+});
+</script>
+@endpush
 @endsection

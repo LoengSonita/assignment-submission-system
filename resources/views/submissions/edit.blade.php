@@ -19,7 +19,7 @@
                                 <option value="">Choose Submission</option>
                                 @foreach($submissions as $submission)
                                     <option value="{{ $submission->submission_id }}" {{ old('submission_id') == $submission->submission_id ? 'selected' : '' }}>
-                                        {{ $submission->student->full_name }} - {{ $submission->assignment->title }} 
+                                        {{ $submission->student->full_name }} - {{ $submission->assignment->title }}
                                         (Submitted: {{ \Carbon\Carbon::parse($submission->submitted_at)->format('d/m/Y') }})
                                     </option>
                                 @endforeach

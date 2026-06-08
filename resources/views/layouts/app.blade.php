@@ -6,8 +6,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Assignment System - @yield('title', 'Dashboard')</title>
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+
     <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,7 +18,6 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Custom CSS -->
     <style>
         * {
             font-family: 'Inter', sans-serif;
@@ -24,6 +26,16 @@
         body {
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
+        }
+
+        .navbar {
+            transition: all 0.3s ease;
+        }
+
+        .navbar-scrolled {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
         }
 
         .navbar-brand {
@@ -45,6 +57,11 @@
             color: #667eea !important;
         }
 
+        .nav-link.active {
+            color: #667eea !important;
+            font-weight: 600;
+        }
+
         .dropdown-menu {
             border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
@@ -60,14 +77,6 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             transform: translateX(5px);
-        }
-
-        .btn-logout {
-            transition: all 0.3s ease;
-        }
-
-        .btn-logout:hover {
-            transform: translateX(3px);
         }
 
         .user-avatar {
@@ -103,6 +112,22 @@
             background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
             color: white;
         }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .user-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 12px;
+            }
+            .role-badge {
+                font-size: 0.6rem;
+                padding: 2px 6px;
+            }
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+        }
     </style>
 
     @stack('styles')
@@ -123,24 +148,24 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url('/dashboard') }}">
+                        <a class="nav-link {{ request()->routeIs('dashboard*') ? 'active' : '' }}" href="{{ url('/dashboard') }}">
                             <i class="fas fa-chart-line me-1"></i> Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url('/courses') }}">
+                        <a class="nav-link {{ request()->routeIs('courses*') ? 'active' : '' }}" href="{{ url('/courses') }}">
                             <i class="fas fa-book me-1"></i> Courses
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url('/assignments') }}">
+                        <a class="nav-link {{ request()->routeIs('assignments*') ? 'active' : '' }}" href="{{ url('/assignments') }}">
                             <i class="fas fa-tasks me-1"></i> Assignments
                         </a>
                     </li>
 
                     @if(Auth::check() && Auth::user()->role_id == 1)
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle {{ request()->routeIs('admin.*') ? 'active' : '' }}" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-crown me-1"></i> Admin
                         </a>
                         <ul class="dropdown-menu">
@@ -247,8 +272,17 @@
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Custom Scripts -->
     <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('navbar-scrolled');
+            } else {
+                navbar.classList.remove('navbar-scrolled');
+            }
+        });
+
         // Auto-hide alerts after 5 seconds
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {

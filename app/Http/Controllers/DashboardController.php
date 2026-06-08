@@ -88,7 +88,46 @@ class DashboardController extends Controller
     public function adminDashboard()
     {
         $data = $this->getDashboardData();
-        $data['recentUsers'] = User::orderBy('created_at', 'desc')->limit(5)->get();
+
+        // Additional admin-specific data
+        $data['totalUsers'] = User::count();
+        $data['newUsersThisMonth'] = User::whereMonth('created_at', now()->month)->count();
+        $data['recentUsers'] = User::with('role')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Get chart data for admin dashboard
+        $submissionsByCourse = DB::table('submissions')
+            ->join('assignments', 'submissions.assignment_id', '=', 'assignments.assignment_id')
+            ->join('courses', 'assignments.course_id', '=', 'courses.course_id')
+            ->select('courses.course_name', DB::raw('COUNT(submissions.submission_id) as total'))
+            ->groupBy('courses.course_id', 'courses.course_name')
+            ->get();
+
+        $data['courseLabels'] = $submissionsByCourse->pluck('course_name');
+        $data['submissionData'] = $submissionsByCourse->pluck('total');
+
+        if ($data['courseLabels']->isEmpty()) {
+            $data['courseLabels'] = collect(['No Data']);
+            $data['submissionData'] = collect([0]);
+        }
+
+        // Grade distribution for admin
+        $grades = Grade::select('marks_obtained')->get();
+        $gradeCounts = ['A' => 0, 'B' => 0, 'C' => 0, 'D' => 0, 'F' => 0];
+
+        foreach ($grades as $grade) {
+            if ($grade->marks_obtained >= 90) $gradeCounts['A']++;
+            elseif ($grade->marks_obtained >= 80) $gradeCounts['B']++;
+            elseif ($grade->marks_obtained >= 70) $gradeCounts['C']++;
+            elseif ($grade->marks_obtained >= 60) $gradeCounts['D']++;
+            else $gradeCounts['F']++;
+        }
+
+        $data['gradeLabels'] = collect(array_keys($gradeCounts));
+        $data['gradeData'] = collect(array_values($gradeCounts));
+
         return view('admin.dashboard', $data);
     }
 

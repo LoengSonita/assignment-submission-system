@@ -5,23 +5,36 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
+    /**
+     * Display a listing of users.
+     */
     public function index()
     {
-        $users = User::orderBy('user_id', 'desc')->paginate(10);
-        $roles = Role::all();
-        return view('users.index', compact('users', 'roles'));
+        $users = User::with('role')->orderBy('user_id', 'desc')->paginate(10);
+        $totalStudents = User::where('role_id', 3)->count();
+        $totalTeachers = User::where('role_id', 2)->count();
+        $totalAdmins = User::where('role_id', 1)->count();
+
+        return view('admin.users.index', compact('users', 'totalStudents', 'totalTeachers', 'totalAdmins'));
     }
 
+    /**
+     * Show the form for creating a new user.
+     */
     public function create()
     {
         $roles = Role::all();
-        return view('users.create', compact('roles'));
+        return view('admin.users.create', compact('roles'));
     }
 
+    /**
+     * Store a newly created user in storage.
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -44,23 +57,32 @@ class UserController extends Controller
             'status' => $request->status
         ]);
 
-        return redirect()->route('user.index')->with('success', 'User created successfully.');
+        return redirect()->route('admin.users.index')
+            ->with('success', 'User created successfully.');
     }
 
+    /**
+     * Display the specified user.
+     */
     public function show($id)
     {
-        $user = User::findOrFail($id);
-        // $role = Role::find($user->role_id);
-        return view('users.show', compact('user', 'role'));
+        $user = User::with('role')->findOrFail($id);
+        return view('admin.users.show', compact('user'));
     }
 
+    /**
+     * Show the form for editing the specified user.
+     */
     public function edit($id)
     {
         $user = User::findOrFail($id);
         $roles = Role::all();
-        return view('users.edit', compact('user', 'roles'));
+        return view('admin.users.edit', compact('user', 'roles'));
     }
 
+    /**
+     * Update the specified user in storage.
+     */
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -90,26 +112,38 @@ class UserController extends Controller
 
         $user->update($data);
 
-        return redirect()->route('user.index')->with('success', 'User updated successfully.');
+        return redirect()->route('admin.users.index')
+            ->with('success', 'User updated successfully.');
     }
 
-    // public function destroy($id)
-    // {
-    //     $user = User::findOrFail($id);
-        
-    //     if (auth()->check() && $user->user_id === auth()->id()) {
-    //         return redirect()->route('user.index')->with('error', 'You cannot delete your own account.');
-    //     }
-        
-    //     $user->delete();
-    //     return redirect()->route('user.index')->with('success', 'User deleted successfully.');
-    // }
-    
+    /**
+     * Remove the specified user from storage.
+     */
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
+
+        if (Auth::check() && $user->user_id === Auth::user()->user_id) {
+            return redirect()->route('admin.users.index')
+                ->with('error', 'You cannot delete your own account.');
+        }
+
+        $user->delete();
+
+        return redirect()->route('admin.users.index')
+            ->with('success', 'User deleted successfully.');
+    }
+
+    /**
+     * Toggle user status (Active/Inactive).
+     */
     public function toggleStatus($id)
     {
         $user = User::findOrFail($id);
         $newStatus = $user->status === 'Active' ? 'Inactive' : 'Active';
         $user->update(['status' => $newStatus]);
-        return redirect()->route('user.index')->with('success', 'User status updated successfully.');
+
+        return redirect()->route('admin.users.index')
+            ->with('success', 'User status updated successfully.');
     }
 }
